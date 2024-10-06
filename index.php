@@ -46,11 +46,11 @@
   <form method="POST" action="">
     <div>
       <label for="email">メールアドレス : </label>
-      <input type="text" name="email" id="email">
+      <input type="text" name="email">
     </div>
     <div>
       <label for="password">パスワード : </label>
-      <input type="password" name="password" id="password">
+      <input type="password" name="password">
     </div>
     <input type="submit" value="送信">
   </form>
