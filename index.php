@@ -11,21 +11,20 @@
       try {
         $db = new PDO('mysql:host=localhost;dbname=login', 'root', 'root');
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $sql = 'SELECT * FROM login_info WHERE email = "' . $email_value . '" AND password = "' . $password_value . '"';
+        $sql = 'SELECT password FROM login_info WHERE email = :email';
         $stmt = $db->prepare($sql);
-        $stmt -> execute();
-  
-        $cnt = $stmt->rowCount();
-  
-        if ($cnt == 1) {
+        $stmt->bindParam(':email', $email_value, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result && password_verify($password_value, $result['password'])) {
           session_start();
           $_SESSION['email'] = $email_value;
           header('Location: ./login.php');
           exit;
-        } else if ($cnt == 0) {
+        } else {
           echo "メールアドレスもしくはパスワードが間違っています";
-        } else if ($cnt > 1) {
-          echo "予期せぬエラーが発生しました";
         }
       } catch (PDOException $e) {
         die("データベース接続失敗 : ". $e->getMessage());

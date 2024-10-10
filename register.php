@@ -9,6 +9,10 @@
         exit;
       }
 
+      if (!filter_var($email_value, FILTER_VALIDATE_EMAIL)) {
+        echo "不正な形式のメールアドレスです。";
+      }
+
       if($password_value != $password_confirm_value) {
         echo "パスワードとパスワード(確認用)が一致しません";
         exit;
@@ -17,28 +21,33 @@
       try {
         $db = new PDO('mysql:host=localhost;dbname=login', 'root', 'root');
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $duplicate_check = 'SELECT * FROM login_info WHERE email = "' . $email_value . '"';
+        $duplicate_check = 'SELECT COUNT(*) FROM login_info WHERE email = :email';
         $check_stmt = $db->prepare($duplicate_check);
+        $check_stmt->bindParam(':email', $email_value, PDO::PARAM_STR);
         $check_stmt->execute();
 
-        $cnt = $check_stmt->rowCount();
+        $cnt = $check_stmt->fetchColumn();
 
         if($cnt > 0) {
           echo "既に使われているメールアドレスです";
           exit;
         }
 
-        $insert_sql = 'INSERT INTO login_info (email, password) VALUES ("' . $email_value . '", "' . $password_value . '")';
+        $hashed_password = password_hash($password_value, PASSWORD_DEFAULT);
+        $insert_sql = 'INSERT INTO login_info (email, password) VALUES (:email, :password)';
         $insert_stmt = $db->prepare($insert_sql);
+        $insert_stmt->bindParam(':email', $email_value, PDO::PARAM_STR);
+        $insert_stmt->bindParam(':password', $hashed_password, PDO::PARAM_STR);
         $insert_stmt->execute();
 
         echo "登録が完了しました<br>5秒後にログインページにリダイレクトします";
 
-        header('Refresh: 5; ./index.php');
+        header('Refresh: 5; URL=./index.php');
         exit;
 
       } catch (PDOException $e) {
-        die("データベース接続失敗 : " . $e->getMessage());
+        error_log("データベースエラー: " . $e->getMessage());
+        die("エラーが発生しました。管理者にお問い合わせください。");
       }
     }
 ?>
