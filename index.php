@@ -16,15 +16,22 @@
         $stmt->bindParam(':email', $email_value, PDO::PARAM_STR);
         $stmt->execute();
 
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($result && password_verify($password_value, $result['password'])) {
-          session_start();
-          $_SESSION['email'] = $email_value;
-          header('Location: ./login.php');
-          exit;
+        if (count($results) === 1) {
+            $result = $results[0];
+            if (password_verify($password_value, $result['password'])) {
+                session_start();
+                $_SESSION['email'] = $email_value;
+                header('Location: ./login.php');
+                exit;
+            } else {
+                echo "メールアドレスもしくはパスワードが間違っています";
+            }
+        } else if (count($results) > 1) {
+            echo "予期せぬエラーが発生しました。";
         } else {
-          echo "メールアドレスもしくはパスワードが間違っています";
+            echo "メールアドレスもしくはパスワードが間違っています";
         }
       } catch (PDOException $e) {
         die("データベース接続失敗 : ". $e->getMessage());
